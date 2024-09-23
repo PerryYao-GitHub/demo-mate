@@ -1,0 +1,33 @@
+server:
+  port: 3000
+
+spring:
+  mvc:
+#    servlet:
+#      path: /api  # backend api prefix
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+# database
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: #################
+    url: jdbc:mysql://localhost:3306/mate?serverTimezone=GMT%2b8 #
+  redis:
+    port: 6379
+    host: localhost
+    database: 0
+  session:
+    timeout: 1440m
+    store-type: redis
+
+
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-value: 1  # logical delete
+      logic-not-delete-value: 0  # not logical delete
