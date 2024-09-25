@@ -15,10 +15,13 @@
 </template>
 
 <script setup lang="ts">
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {ref} from "vue";
+import axiosUser from "../plugin/axios/user.ts";
+import {showToast} from "vant";
 
 const route = useRoute();
+const router = useRouter();
 
 const editInfo = ref({
   editKey: route.query.editKey,
@@ -26,7 +29,23 @@ const editInfo = ref({
   editField: route.query.editField,
 })
 
-const onSubmit = () => {
+const onSubmit = async () => {
+  const resp = await axiosUser.post("/edit_account", {
+    [editInfo.value.editKey as string]: editInfo.value.currentValue,
+  })
+
+  if (resp.data.code === 200) {
+    showToast({
+      message: resp.data.description,
+      type: "success",
+    })
+    router.back();
+  } else {
+    showToast({
+      message: resp.data.description,
+      type: "fail",
+    })
+  }
 
 }
 </script>

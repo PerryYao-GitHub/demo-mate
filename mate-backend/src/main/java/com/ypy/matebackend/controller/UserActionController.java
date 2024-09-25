@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
@@ -23,5 +24,10 @@ public class UserActionController {
     public Resp searchUsersByTags(@RequestParam List<String> tagNames) {
         if (CollectionUtil.isEmpty(tagNames)) throw new BusinessException(Code.ERROR_PARAMS_NULL);
         return userActionService.searchUsersByTags(tagNames);
+    }
+
+    @GetMapping("/users/recommend")
+    public Resp getUsersRecommend(HttpServletRequest request, @RequestParam Integer page) {
+        return userActionService.getUsersRecommend(request, page);
     }
 }

@@ -31,6 +31,14 @@ public class UserAccountServiceImpl implements UserAccountService {
     private UserMapper userMapper;
 
     @Override
+    public Integer getUserIdFromRequest(HttpServletRequest request) {
+        // 从Session中获取用户信息
+        Map<String, Object> user = (Map<String, Object>) request.getSession().getAttribute("user");
+        if (user == null) return null;
+        return (Integer) user.get("id");
+    }
+
+    @Override
     public Resp register(AccountPasswordDTO dto) {
         String account = dto.getAccount();
         String password = dto.getPassword();
@@ -72,14 +80,13 @@ public class UserAccountServiceImpl implements UserAccountService {
         if (user == null) throw new BusinessException(Code.ERROR_PARAMS_INVALID, Description.WRONG_ACCOUNT_PASSWORD.getStr());
         user.setLoginTime(LocalDateTime.now());
         userMapper.updateById(user);
-
         // 将用户信息存入 session
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", user.getId());
         userInfo.put("account", user.getAccount());
         userInfo.put("role", user.getRole());
         request.getSession().setAttribute("user", userInfo);
-        return Resp.success(Description.LOGIN_SUCCESS.getStr(), null);
+        return Resp.success(Description.LOGIN_SUCCESS.getStr(), UserDTO.toDTO(user));
     }
 
     @Override
@@ -138,11 +145,11 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public Resp editAccount(Integer id, UserDTO dto) {
         User user = userMapper.selectById(id);
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
+        if ( !StrUtil.isBlank( dto.getName() )) user.setName(dto.getName());
+        if ( !StrUtil.isBlank( dto.getEmail() ))user.setEmail(dto.getEmail());
+        if ( !StrUtil.isBlank( dto.getPhone() ))user.setPhone(dto.getPhone());
+        if ( !StrUtil.isBlank( dto.getAvatar() ))user.setAvatar(dto.getAvatar());
         user.setUpdateTime(LocalDateTime.now());
-        System.out.println(user);
         userMapper.updateById(user);
         return Resp.success(Description.EDIT_ACCOUNT_SUCCESS.getStr(), null);
     }

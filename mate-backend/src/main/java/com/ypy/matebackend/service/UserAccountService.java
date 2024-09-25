@@ -15,12 +15,17 @@ import javax.servlet.http.HttpServletRequest;
 * @createDate 2024-09-17 22:11:05
 */
 public interface UserAccountService {
+    Integer getUserIdFromRequest(HttpServletRequest request);
+
+
+
     Resp register(AccountPasswordDTO dto);
     Resp login(AccountPasswordDTO dto, HttpServletRequest request);
     Resp logout(HttpServletRequest request);
     Resp changePassword(Integer id, AccountPasswordDTO dto);
-    Resp delAccount(Integer id, AccountPasswordDTO dto);
 
+    Resp delAccount(Integer id, AccountPasswordDTO dto);
     Resp checkAccount(Integer id);
+
     Resp editAccount(Integer id, UserDTO dto);
 }

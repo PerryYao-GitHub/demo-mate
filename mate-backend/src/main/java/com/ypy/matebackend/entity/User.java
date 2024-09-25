@@ -1,6 +1,7 @@
 package com.ypy.matebackend.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class User implements Serializable {
 
     private String account;
 
+    @JsonIgnore
     private String password;
 
     private String name;

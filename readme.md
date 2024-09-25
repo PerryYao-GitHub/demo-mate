@@ -87,3 +87,41 @@ SQL查询
 在 spring boot 2.7.x 使用
 
 注意, 可以使用 @Profile("prod" / "dev") 来关闭dev环境下的拦截器, 不然就得把所有的api doc 接口排除出拦截器, 不方便
+
+## Redis
+
+基于内存的 K/V 数据库, 读取用户的Session信息极为频繁, 故选择 Redis
+
+引入redis
+
+`org.springframework.boot` -> `spring-boot-starter-data-redis`
+
+引入session与redis的整合工具
+
+`org.springframework.session` -> `spring-data-redis`
+
+调整session存储位置
+
+````yml
+spring:
+  session:
+    timeout: 1440m
+    store-type: redis
+````
+
+认证的方法
+
+session-cookie
+
+- session - 本地内存
+- session - redis (分布式session 登录)
+- session -mysql (类似Django 自带的session处理方案)
+
+jwt
+
+Spring Security : 前后端不分离时期的产物, 只适合做细粒度的权限控制
+
+### 主页功能
+
+1. 默认推荐和自己tag相关或接近的用户
+2. 优化主页性能 (缓存 + 定时任务 + 分布式锁)

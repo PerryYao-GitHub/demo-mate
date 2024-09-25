@@ -41,6 +41,11 @@ watch(route, (newRoute) => {
       activeTab.value = 'me';
       title.value = 'Edit';
       break;
+    case '/auth':
+      activeTab.value = 'me';
+      title.value = 'Auth';
+      break;
+
     default:
       activeTab.value = 'home'; // 默认路径
       title.value = 'Home';

@@ -3,7 +3,8 @@ import {useRoute} from "vue-router";
 import {onMounted, ref} from "vue";
 import axiosUser from "../plugin/axios/user.ts";
 import qs from 'qs'
-import {Toast} from "vant";
+import {showToast} from "vant";
+import UserCardList from "../components/UserCardList.vue";
 
 const userLst = ref([]);
 const route = useRoute();
@@ -29,12 +30,14 @@ onMounted(async () => {
           }
           userLst.value = tmpUserLst
         } else {
-          Toast.fail(resp.data.description)
+          showToast({
+            message: resp.data.description,
+            type: "fail"
+          })
         }
       } catch (error) {
         console.log(error); // 处理错误
       }
-
     });
 const defaultAvatar = "public/vite.svg"; // 替换为你的默认头像路径
 
@@ -42,16 +45,7 @@ const defaultAvatar = "public/vite.svg"; // 替换为你的默认头像路径
 </script>
 
 <template>
-  <van-card
-      v-for="user in userLst"
-      :title="user.name"
-      :thumb="user.avatar ? user.avatar : defaultAvatar"
-  >
-    <template #tags>
-      <van-tag v-for="tag in user.tags" plain type="danger" style="margin-right: 5px">{{ tag }}</van-tag>
-    </template>
-  </van-card>
-  <van-empty v-if="!userLst || userLst.length === 0" description="no adapted users"></van-empty>
+  <UserCardList :user-lst="userLst" />
 </template>
 
 <style scoped>
