@@ -32,6 +32,10 @@ public class User implements Serializable {
 
     private String tags;  // JSON 列表
 
+    private Integer createTeamCnt;
+
+    private Integer joinTeamCnt;
+
     private Byte status;
 
     private Byte role;

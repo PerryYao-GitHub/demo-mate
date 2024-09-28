@@ -1,4 +1,4 @@
-package com.ypy.matebackend.service;
+package com.ypy.matebackend.service.base_service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ypy.matebackend.entity.User;

@@ -26,25 +26,42 @@ const router = createRouter({
         {
             path: '/team',
             component: () => import('../pages/Team.vue'),
-            meta: {
-                requiresAuth: true,
-            }
+            meta: {requiresAuth: true,}
+        },
+
+        {
+            path: '/team/create',
+            component: () => import('../pages/TeamCreate.vue'),
+            meta: {requiresAuth: true,}
+        },
+
+        {
+            path: '/team/check/:teamId',
+            component: () => import('../pages/TeamCheck.vue'),
+            meta: {requiresAuth: true,}
+        },
+
+        {
+            path: '/team/edit/:teamId',
+            component: () => import('../pages/TeamEdit.vue'),
+            meta: {requiresAuth: true,}
         },
 
         {
             path: '/me',
             component: () => import('../pages/Me.vue'),
-            meta: {
-                requiresAuth: true,
-            }
+            meta: {requiresAuth: true,}
         },
 
         {
-            path: '/edit',
-            component: () => import('../pages/Edit.vue'),
-            meta: {
-                requiresAuth: true,
-            }
+            path: '/me/edit',
+            component: () => import('../pages/MeEdit.vue'),
+            meta: {requiresAuth: true,}
+        },
+
+        {
+            path: '/me/auth',
+            component: () => import('../pages/MeAuth.vue')
         },
 
         {
@@ -55,13 +72,6 @@ const router = createRouter({
         {
             path: '/search/result',
             component: () => import('../pages/SearchResult.vue')
-        },
-
-
-        {
-            path: '/auth',
-            name: 'auth',
-            component: () => import('../pages/Auth.vue')
         },
     ]
 })
@@ -75,7 +85,7 @@ router.beforeEach((to, from, next) => {
     if (to.matched.some(record => record.meta.requiresAuth)) {
         if (!userStore.isLogin) {
             // 如果用户没有登录，重定向到 /auth 页面
-            next('/auth');
+            next('/me/auth');
         } else {
             // 如果已经登录，继续导航
             next();

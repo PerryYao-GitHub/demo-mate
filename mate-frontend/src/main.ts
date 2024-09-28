@@ -1,4 +1,4 @@
-import {createApp, onBeforeMount} from 'vue';
+import {createApp, onMounted} from 'vue';
 import './style.css'; // 你的自定义样式
 import App from './App.vue';
 import Vant from 'vant';  // 引入 Vant 全局组件库
@@ -14,7 +14,7 @@ app.use(router);
 app.use(Vant);
 app.use(createPinia());
 const userStore = useUserStore();
-onBeforeMount(()=> {
+onMounted(()=> {
     userStore.loadUserInfo();
 })
 app.mount('#app');

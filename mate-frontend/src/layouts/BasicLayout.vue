@@ -12,43 +12,26 @@ const route = useRoute();
 // 监听路由变化，更新 title 和 activeTab
 watch(route, (newRoute) => {
   const path = newRoute.path;
-  switch (path) {
-    case '/home':
-      activeTab.value = 'home';
-      title.value = 'Home';
-      break;
-    case '/team':
-      activeTab.value = 'team';
-      title.value = 'Team';
-      break;
-    case '/me':
-      activeTab.value = 'me';
-      title.value = 'Me';
-      break;
-    case '/search':
-      activeTab.value = 'search';
-      title.value = 'Search';
-      break;
-    case '/search/result':
-      activeTab.value = 'search';
-      title.value = 'Result';
-      break;
-    case '/setting':
-      activeTab.value = 'setting';
-      title.value = 'Settings';
-      break;
-    case '/edit':
-      activeTab.value = 'me';
-      title.value = 'Edit';
-      break;
-    case '/auth':
-      activeTab.value = 'me';
-      title.value = 'Auth';
-      break;
 
-    default:
-      activeTab.value = 'home'; // 默认路径
-      title.value = 'Home';
+  if (path.startsWith('/team')) {
+    activeTab.value = 'team';
+    title.value = 'Team';
+  } else if (path.startsWith('/me')) {
+    activeTab.value = 'me';
+    title.value = 'Me';
+    title.value = path === '/me/edit' ? 'Edit' : path === '/me/auth' ? 'Auth' : 'Me'; // 特殊情况
+  } else if (path.startsWith('/search')) {
+    activeTab.value = 'search';
+    title.value = path === '/search/result' ? 'Result' : 'Search';
+  } else if (path === '/setting') {
+    activeTab.value = 'setting';
+    title.value = 'Settings';
+  } else if (path === '/home') {
+    activeTab.value = 'home';
+    title.value = 'Home';
+  } else {
+    activeTab.value = 'home'; // 默认路径
+    title.value = 'Home';
   }
 });
 

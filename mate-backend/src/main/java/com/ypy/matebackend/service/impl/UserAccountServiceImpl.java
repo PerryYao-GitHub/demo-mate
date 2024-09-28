@@ -63,6 +63,8 @@ public class UserAccountServiceImpl implements UserAccountService {
         user.setAccount(account);
         user.setName("new user " + account);
         user.setPassword(SecureUtil.md5(password));
+        user.setCreateTeamCnt(0);
+        user.setJoinTeamCnt(0);
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
         user.setStatus(UserStatus.AVAILABLE.getCode());

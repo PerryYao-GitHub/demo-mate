@@ -1,18 +1,14 @@
 package com.ypy.matebackend.service;
 
-import com.ypy.matebackend.common.Description;
-import com.ypy.matebackend.common.exception.BusinessException;
 import com.ypy.matebackend.dto.AccountPasswordDTO;
 import com.ypy.matebackend.entity.User;
+import com.ypy.matebackend.service.base_service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class UserAccountServiceTest {
@@ -25,7 +21,7 @@ class UserAccountServiceTest {
     @Test
     void registerFakeUser() {
 //        AccountPasswordDTO dto = new AccountPasswordDTO();
-//        for (int i = 1; i <= 100; i++) {
+//        for (int i = 1; i <= 20; i++) {
 //            dto.setAccount("fake" + i);
 //            dto.setPassword("123456");
 //            dto.setConfirmPassword("123456");
@@ -36,7 +32,7 @@ class UserAccountServiceTest {
     @Test
     void makeFakeTags() {
 //        List<User> fakeUsers = new ArrayList<>();
-//        for (int i = 11; i <= 110; i++) {
+//        for (int i = 1; i <= 20; i++) {
 //            User user = new User();
 //            user.setId(i);
 //            if (i % 4 == 0) user.setTags("[\"java\"]");
