@@ -20,7 +20,6 @@ onMounted(async () => {
             return qs.stringify(params, { arrayFormat: 'repeat' });
           }
         });
-        console.log(resp.data); // 在这里处理请求的响应数据
         if (resp.data.code === 200) {
           let tmpUserLst = resp.data.data
           if (tmpUserLst) {

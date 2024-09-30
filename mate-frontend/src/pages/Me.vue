@@ -10,11 +10,24 @@
   </div>
 
   <van-cell title="account" :value="user.account" class="left-align-cell"></van-cell>
-  <van-cell title="avatar" :value="user.avatar || 'No avatar'" is-link to="/edit" @click="toEdit('avatar', 'avatar', user.avatar)"></van-cell>
-  <van-cell title="name" :value="user.name || 'No name'" is-link to="/edit" @click="toEdit('name', 'name', user.name)"></van-cell>
-  <van-cell title="phone" :value="user.phone || 'No phone'" is-link to="/edit" @click="toEdit('phone', 'phone', user.phone)"></van-cell>
-  <van-cell title="email" :value="user.email || 'No email'" is-link to="/edit" @click="toEdit('email', 'email', user.email)"></van-cell>
+  <van-cell title="avatar" :value="user.avatar || 'No avatar'" is-link @click="toEdit('avatar', 'avatar', user.avatar)"></van-cell>
+  <van-cell title="name" :value="user.name || 'No name'" is-link @click="toEdit('name', 'name', user.name)"></van-cell>
+  <van-cell title="phone" :value="user.phone || 'No phone'" is-link @click="toEdit('phone', 'phone', user.phone)"></van-cell>
+  <van-cell title="email" :value="user.email || 'No email'" is-link @click="toEdit('email', 'email', user.email)"></van-cell>
 
+  <!-- 展示 tags -->
+  <van-cell title="tags" @click="toEditTags(user.tags)">
+    <template #default>
+      <van-tag
+        v-for="(tag, index) in parsedTags"
+        :key="index"
+        type="primary"
+        style="margin-right: 8px;"
+      >
+        {{ tag }}
+      </van-tag>
+    </template>
+  </van-cell>
 
   <van-button type="danger" @click="onLogout">Logout</van-button>
 </template>
@@ -23,10 +36,10 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import axiosUser from "../plugin/axios/user.ts";
-import { showToast } from "vant";
-import {useUserStore} from "../plugin/pinia/user.ts";
+import { useUserStore } from "../plugin/pinia/user.ts";
 
-const defaultAvatar = 'public/vite.svg'
+// 默认头像
+const defaultAvatar = 'public/vite.svg';
 const userStore = useUserStore();
 
 // 用户信息
@@ -36,17 +49,32 @@ const user = ref({
   name: "",
   phone: "",
   email: "",
+  tags: "[]",  // 初始值为空数组的 JSON 字符串
 });
 
+// 解析后的 tags 列表
+const parsedTags = ref<string[]>([]);
+
+// 解析 tags 的方法
+const parseTags = (tags: string) => {
+  try {
+    return JSON.parse(tags);
+  } catch (error) {
+    return [];
+  }
+};
+
+// 获取用户信息
 onMounted(() => {
-  userStore.checkAccount()
-  user.value = userStore.info
+  userStore.checkAccount();
+  user.value = userStore.info;
+  parsedTags.value = parseTags(user.value.tags);  // 解析 tags
 });
 
 const router = useRouter();
 const toEdit = (editKey: string, editField: string, currentValue: string) => {
   router.push({
-    path: '/edit',
+    path: '/me/edit',
     query: {
       editKey,
       editField,
@@ -55,12 +83,15 @@ const toEdit = (editKey: string, editField: string, currentValue: string) => {
   });
 };
 
+const toEditTags = (tags: string) => {
+  router.push(`/me/edit/tags/${tags}`)
+}
+
 const onLogout = () => {
   axiosUser.get("/logout");
   userStore.delUser();
-  router.replace("/auth");
-}
-
+  router.replace("/me/auth");
+};
 </script>
 
 <style scoped>

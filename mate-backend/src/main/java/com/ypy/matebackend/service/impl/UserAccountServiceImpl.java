@@ -11,12 +11,15 @@ import com.ypy.matebackend.entity.User;
 import com.ypy.matebackend.mapper.UserMapper;
 import com.ypy.matebackend.service.UserAccountService;
 
+import com.ypy.matebackend.utils.GsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -151,6 +154,17 @@ public class UserAccountServiceImpl implements UserAccountService {
         if ( !StrUtil.isBlank( dto.getEmail() ))user.setEmail(dto.getEmail());
         if ( !StrUtil.isBlank( dto.getPhone() ))user.setPhone(dto.getPhone());
         if ( !StrUtil.isBlank( dto.getAvatar() ))user.setAvatar(dto.getAvatar());
+        if ( StrUtil.isNotBlank( dto.getTags() ) ) {
+            String tagsStr = dto.getTags();
+            List<String> tags = GsonUtils.convertJsonToList(tagsStr);
+            if (tags.size() > 5) throw new BusinessException(Code.ERROR_PARAMS_INVALID, "a user can only have 5 tags at most");
+            for (String tag : tags) {
+                if (! TagConst.isValidTag(tag)) throw new BusinessException(Code.ERROR_PARAMS_INVALID, "wrong tags");
+            }
+            Collections.sort(tags);  // 把 tag 排序后存入
+            tagsStr = GsonUtils.convertListToJson(tags);
+            user.setTags(tagsStr);
+        }
         user.setUpdateTime(LocalDateTime.now());
         userMapper.updateById(user);
         return Resp.success(Description.EDIT_ACCOUNT_SUCCESS.getStr(), null);

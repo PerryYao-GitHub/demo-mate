@@ -60,6 +60,12 @@ const router = createRouter({
         },
 
         {
+            path: '/me/edit/tags/:tags',
+            component: () => import('../pages/MeEditTags.vue'),
+            meta: {requiresAuth: true,}
+        },
+
+        {
             path: '/me/auth',
             component: () => import('../pages/MeAuth.vue')
         },
@@ -71,8 +77,13 @@ const router = createRouter({
 
         {
             path: '/search/result',
-            component: () => import('../pages/SearchResult.vue')
+            component: () => import('../pages/SearchResult.vue'),
         },
+
+        {
+            path: '/user/:id',
+            component: () => import('../pages/UserPage.vue')
+        }
     ]
 })
 

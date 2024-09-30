@@ -10,37 +10,6 @@ import java.util.Map;
 
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
-    /*
-    * 请求体中的 Authorization: "Bearer " + this.store.user.token
-    * JWT version
-    * */
-//    @Override
-//    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-//        // 允许所有 OPTIONS 请求通过  !!!!!!!!!! 不加以下内容会影响跨域
-//        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
-//
-//        String authorizationHeader = request.getHeader("Authorization");
-//
-//        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("Missing or invalid Authorization header");
-//            return false;
-//        }
-//
-//        String token = authorizationHeader.substring(7);
-//        Map<String, Object> claims;
-//        try {
-//            claims = JwtUtils.parseToken(token);  // 这一过程包含了对token合法性检验
-//        } catch (Exception e) {
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("Invalid token");
-//            return false;
-//        }
-//
-//        request.setAttribute("claims", claims);
-//        return true;
-//    }
-
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 允许所有 OPTIONS 请求通过，跨域处理

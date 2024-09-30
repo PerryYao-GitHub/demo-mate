@@ -17,8 +17,6 @@ import javax.servlet.http.HttpServletRequest;
 public interface UserAccountService {
     Integer getUserIdFromRequest(HttpServletRequest request);
 
-
-
     Resp register(AccountPasswordDTO dto);
     Resp login(AccountPasswordDTO dto, HttpServletRequest request);
     Resp logout(HttpServletRequest request);

@@ -22,10 +22,22 @@ public class UserActionController {
     @Resource
     private UserAccountService userAccountService;
 
+    @GetMapping("/get/all/tags")
+    public Resp getAllTags() {
+        return userActionService.getAllTags();
+    }
+
     @GetMapping("/search_users_by_tags")
     public Resp searchUsersByTags(@RequestParam List<String> tagNames) {
         if (CollectionUtil.isEmpty(tagNames)) throw new BusinessException(Code.ERROR_PARAMS_NULL);
         return userActionService.searchUsersByTags(tagNames);
+    }
+
+    @GetMapping("/check/one/user")
+    public Resp checkOneUser(HttpServletRequest request, @RequestParam Integer userId) {
+        Integer visitorId = userAccountService.getUserIdFromRequest(request);
+        if (visitorId == null) throw new BusinessException(Code.ERROR_PARAMS_NULL);
+        return userActionService.checkOneUser(visitorId, userId);
     }
 
     @GetMapping("/users/recommend")

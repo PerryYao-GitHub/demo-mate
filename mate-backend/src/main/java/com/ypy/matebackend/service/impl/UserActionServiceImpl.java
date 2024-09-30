@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.ypy.matebackend.common.Code;
 import com.ypy.matebackend.common.Resp;
+import com.ypy.matebackend.common.TagConst;
 import com.ypy.matebackend.common.TeamConst;
 import com.ypy.matebackend.common.exception.BusinessException;
 import com.ypy.matebackend.dto.TeamDTO;
@@ -22,7 +23,12 @@ import com.ypy.matebackend.service.UserActionService;
 import com.ypy.matebackend.service.base_service.TeamService;
 import com.ypy.matebackend.service.base_service.UserService;
 import com.ypy.matebackend.service.base_service.JoinService;
+import com.ypy.matebackend.utils.AlgorithmUtils;
+import com.ypy.matebackend.utils.GsonUtils;
 import com.ypy.matebackend.utils.PaginationUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -49,9 +55,6 @@ public class UserActionServiceImpl implements UserActionService {
     private JoinService joinService;
 
     @Resource
-    private UserAccountService userAccountService;
-
-    @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
     @Override
@@ -61,6 +64,28 @@ public class UserActionServiceImpl implements UserActionService {
         QueryWrapper<User> qw = new QueryWrapper<>();
         qw.ge("login_time", threeDaysAgo);
         return userService.list(qw);
+    }
+
+    @Override
+    public Resp getAllTags() {
+        return Resp.success(TagConst.getAllTagsForFrontend());
+    }
+
+    @Override
+    public Resp checkOneUser(Integer visitorId, Integer userId) {
+        if (visitorId == null || userId == null) throw new BusinessException(Code.ERROR_PARAMS_INVALID);
+        User user = userService.getById(userId);
+        UserDTO userDTO = UserDTO.toDTO(user);
+        QueryWrapper<Join> qw = new QueryWrapper<>();
+        qw.eq("user_id", userId);
+        List<Join> joins = joinService.list(qw);
+        List<Team> joiningTeams = joins.stream().map(join -> {
+            Integer teamId = join.getTeamId();
+            Team team = teamService.getById(teamId);
+            return team;
+        }).collect(Collectors.toList());
+        userDTO.setJoiningTeams(joiningTeams);
+        return Resp.success(userDTO);
     }
 
     @Override
@@ -100,19 +125,21 @@ public class UserActionServiceImpl implements UserActionService {
     }
 
 
-
-
     /******************************************************************************************************************/
     /******************************************************************************************************************/
     /******************************************************************************************************************/
     @Override
     public Resp getUsersRecommend(Integer userId, Integer page) {
         if (page == null || page < 1) page = 1;
+        User targetUser = null;
+        if (userId != null) {
+            targetUser = userService.getById(userId);
+            if (targetUser == null) throw new BusinessException(Code.ERROR_PARAMS_INVALID);
+        }
 
-        List<User> activeUsers;
-        String activeUsersRedisKey = "mate-precachejob-activeusers";
-
-        // 先看 redis 中有没有 "mate-precachejob-activeusers" key
+        List<User> activeUsers = null;
+        String activeUsersRedisKey = "mate:precache-job:active-users";
+        // 先看 redis 中有没有 "mate:precache-job:active-users" key
         if (Boolean.TRUE.equals(redisTemplate.hasKey(activeUsersRedisKey))) {
             activeUsers = (List<User>) redisTemplate.opsForValue().get(activeUsersRedisKey);
         } else {
@@ -124,29 +151,9 @@ public class UserActionServiceImpl implements UserActionService {
         }
 
         List<User> recommendedUsers = null;
-        String redisKey = "mate-user-recommend-" + page;
+        String redisKey = "mate:user-recommend:" + page;
 
-        // 如果用户已登录，生成个性化推荐
-        if (userId != null) {
-            redisKey += "-" + userId;
-
-            // 检查个性化推荐缓存是否存在
-            if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
-                recommendedUsers = (List<User>) redisTemplate.opsForValue().get(redisKey);
-            } else {
-                // 自定义推荐算法 (伪代码，需要你实现算法逻辑)
-                recommendedUsers = getMatchUsers(userId, activeUsers);
-
-                // 进行分页
-                recommendedUsers = PaginationUtils.paginate(recommendedUsers, page, 10);
-
-                // 只有当推荐结果不为空时才缓存
-                if (CollectionUtil.isNotEmpty(recommendedUsers)) {
-                    redisTemplate.opsForValue().set(redisKey, recommendedUsers, 5, TimeUnit.MINUTES);  // 五分钟过期
-                }
-            }
-        } else {
-            // 未登录用户，使用公共推荐缓存
+        if (userId == null) {  // 未登录用户，使用公共推荐缓存
             if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
                 recommendedUsers = (List<User>) redisTemplate.opsForValue().get(redisKey);
             } else {
@@ -158,22 +165,64 @@ public class UserActionServiceImpl implements UserActionService {
                     redisTemplate.opsForValue().set(redisKey, recommendedUsers, 5, TimeUnit.MINUTES);  // 五分钟过期
                 }
             }
+        } else {  // 如果用户已登录，生成个性化推荐
+            redisKey += "-" + userId;
+            // 检查个性化推荐缓存是否存在
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
+                recommendedUsers = (List<User>) redisTemplate.opsForValue().get(redisKey);
+            } else {
+                // 自定义推荐算法 (伪代码，需要你实现算法逻辑)
+                recommendedUsers = getMatchUsers(targetUser, activeUsers, page * 10);
+
+                // 进行分页
+                recommendedUsers = PaginationUtils.paginate(recommendedUsers, page, 10);
+
+                // 只有当推荐结果不为空时才缓存
+                if (CollectionUtil.isNotEmpty(recommendedUsers)) {
+                    redisTemplate.opsForValue().set(redisKey, recommendedUsers, 5, TimeUnit.MINUTES);  // 五分钟过期
+                }
+            }
         }
 
         // 如果推荐结果为空，返回空列表
         return Resp.success(recommendedUsers == null ? Collections.emptyList() : recommendedUsers);
     }
 
-    private List<User> getMatchUsers(Integer userId, List<User> users) {
-        return null;
+    private List<User> getMatchUsers(User targetUser, List<User> users, Integer topN) {
+        List<String> targetTagLst = GsonUtils.convertJsonToList(targetUser.getTags());
+
+        // 创建一个大顶堆，按分数排序（score越大越靠前）
+        PriorityQueue<Pair<Integer, Integer>> maxHeap = new PriorityQueue<>(topN + 1, Comparator.comparing(Pair::getRight, Comparator.reverseOrder()));  // initialCapacity 取 topN + 1, 避免自动扩容
+
+        users.stream()
+                .filter(user -> StrUtil.isNotBlank(user.getTags()))  // 过滤掉tags为空的用户
+                .filter(user -> !Objects.equals(user.getId(), targetUser.getId()))  // 过滤掉自己
+                .forEach(user -> {
+                    // 将 user.getTags() 转换成 List<String>
+                    List<String> tags = GsonUtils.convertJsonToList(user.getTags());
+
+                    // 计算匹配分数 (score 越小，匹配度越高)
+                    Integer score = AlgorithmUtils.minDist(targetTagLst, tags);
+
+                    // 将用户ID和分数放入大顶堆
+                    maxHeap.offer(Pair.of(user.getId(), score));
+
+                    // 如果堆的大小超过 topN，移除堆顶最大的元素
+                    if (maxHeap.size() > topN) {
+                        maxHeap.poll();  // 移除得分最高的，即堆顶元素
+                    }
+                });
+
+        // 将优先队列中的用户ID转换成用户对象，并返回最终的匹配用户列表
+        List<User> topMatchedUsers = maxHeap.stream()
+                .map(pair -> userService.getById(pair.getLeft()))  // 根据ID获取User对象
+                .collect(Collectors.toList());
+
+        return topMatchedUsers;
     }
     /******************************************************************************************************************/
     /******************************************************************************************************************/
     /******************************************************************************************************************/
-
-
-
-
 
 
     @Override
@@ -285,6 +334,7 @@ public class UserActionServiceImpl implements UserActionService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Resp leaderUpdateTeam(Integer leaderId, TeamDTO teamDTO) {
         if (teamDTO == null || leaderId == null || teamDTO.getId() == null) throw new BusinessException(Code.ERROR_PARAMS_NULL);
         if (!Objects.equals(teamDTO.getLeaderId(), leaderId)) throw new BusinessException(Code.ERROR_AUTH);
@@ -296,30 +346,67 @@ public class UserActionServiceImpl implements UserActionService {
         return Resp.success();
     }
 
-    @Override
-    public Resp joinTeam(Integer teamId, Integer userId) {
-        QueryWrapper<Join> qw = new QueryWrapper<>();
-        qw.eq("team_id", teamId);
-        qw.eq("user_id", userId);
-        if (joinService.count(qw) > 0) throw new BusinessException(Code.ERROR_AUTH);
-        Team joinedTeam = teamService.getById(teamId);
-        if (joinedTeam == null || joinedTeam.getMemberCnt() >= TeamConst.MAX_MEMBER_CNT) throw new BusinessException(Code.ERROR_AUTH, "team is full");
-        User user = userService.getById(userId);
-        if (user.getJoinTeamCnt() >= TeamConst.MAX_JOIN_CNT) throw new BusinessException(Code.ERROR_AUTH, "you can only join 5 teams at most");
+     @Autowired
+    private RedissonClient redissonClient;
 
-        Join join = new Join();
-        join.setTeamId(teamId);
-        join.setUserId(userId);
-        join.setCreateTime(LocalDateTime.now());
-        if (!joinService.save(join)) throw new BusinessException(Code.ERROR_BACKEND);
-        joinedTeam.setMemberCnt(joinedTeam.getMemberCnt() + 1);
-        user.setJoinTeamCnt(user.getJoinTeamCnt() + 1);
-        if (!teamService.updateById(joinedTeam)) throw new BusinessException(Code.ERROR_BACKEND);
-        if (!userService.updateById(user)) throw new BusinessException(Code.ERROR_BACKEND);
-        return Resp.success();
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Resp joinTeam(Integer teamId, Integer userId) {
+        if (teamId == null || userId == null) throw new BusinessException(Code.ERROR_PARAMS_NULL);
+
+        // 获取锁，锁的key可以是 teamId 或者 userId 的唯一组合
+        RLock lock = redissonClient.getLock("mate:join-team:lock:" + teamId + "-" + userId);
+
+        try {
+            // 尝试获取锁，等待时间为 100ms，超时时间为 10 秒（任务完成后自动释放）
+            if (lock.tryLock(100, 10, TimeUnit.SECONDS)) {
+                // 加入队伍逻辑
+                QueryWrapper<Join> qw = new QueryWrapper<>();
+                qw.eq("team_id", teamId);
+                qw.eq("user_id", userId);
+
+                // 检查用户是否已经加入该队伍
+                if (joinService.count(qw) > 0) throw new BusinessException(Code.ERROR_AUTH, "you are already in the team");
+
+                // 检查队伍是否已满
+                Team joinedTeam = teamService.getById(teamId);
+                if (joinedTeam == null || joinedTeam.getMemberCnt() >= TeamConst.MAX_MEMBER_CNT)
+                    throw new BusinessException(Code.ERROR_AUTH, "team is full");
+
+                // 检查用户是否已加入太多队伍
+                User user = userService.getById(userId);
+                if (user.getJoinTeamCnt() >= TeamConst.MAX_JOIN_CNT)
+                    throw new BusinessException(Code.ERROR_AUTH, "you can only join 5 teams at most");
+
+                // 更新用户加入队伍记录
+                Join join = new Join();
+                join.setTeamId(teamId);
+                join.setUserId(userId);
+                join.setCreateTime(LocalDateTime.now());
+                if (!joinService.save(join)) throw new BusinessException(Code.ERROR_BACKEND);
+
+                // 更新队伍成员数量和用户加入队伍数量
+                joinedTeam.setMemberCnt(joinedTeam.getMemberCnt() + 1);
+                user.setJoinTeamCnt(user.getJoinTeamCnt() + 1);
+                if (!teamService.updateById(joinedTeam)) throw new BusinessException(Code.ERROR_BACKEND);
+                if (!userService.updateById(user)) throw new BusinessException(Code.ERROR_BACKEND);
+
+                return Resp.success();
+            } else {
+                throw new BusinessException(Code.ERROR_BACKEND, "Could not acquire lock");
+            }
+        } catch (InterruptedException e) {
+            throw new BusinessException(Code.ERROR_BACKEND, "Lock acquisition interrupted");
+        } finally {
+            // 确保释放锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Resp quitTeam(Integer teamId, Integer userId) {
         Team team = teamService.getById(teamId);
         if (team == null) throw new BusinessException(Code.ERROR_PARAMS_INVALID);

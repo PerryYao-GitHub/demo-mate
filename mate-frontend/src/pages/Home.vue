@@ -5,6 +5,7 @@ import {showToast} from "vant";
 import UserCardList from "../components/UserCardList.vue";
 
 const userLst = ref([]);
+const loading = ref(true);
 
 onMounted(async () => {
   try {
@@ -13,7 +14,6 @@ onMounted(async () => {
         page: 1
       }
     });
-    // console.log(resp.data); // 在这里处理请求的响应数据
     if (resp.data.code === 200) {
       let tmpUserLst = resp.data.data
       if (tmpUserLst) {
@@ -22,6 +22,7 @@ onMounted(async () => {
         })
       }
       userLst.value = tmpUserLst
+      loading.value = false;
     } else {
       showToast({
         message: resp.data.description,
@@ -36,7 +37,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UserCardList :user-lst="userLst" />
+  <UserCardList :user-lst="userLst" :loading="loading"/>
 </template>
 
 <style scoped>

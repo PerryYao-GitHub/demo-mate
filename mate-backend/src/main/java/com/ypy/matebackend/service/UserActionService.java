@@ -13,6 +13,10 @@ public interface UserActionService {
      */
     List<User> getActiveUsers();
 
+    Resp getAllTags();
+
+    Resp checkOneUser(Integer visitorId, Integer userId);
+
     Resp searchUsersByTags(List<String> tags);
 
     Resp getUsersRecommend(Integer userId, Integer page);

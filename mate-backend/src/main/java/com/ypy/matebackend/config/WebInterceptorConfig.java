@@ -28,6 +28,7 @@ public class WebInterceptorConfig implements WebMvcConfigurer {
                         "/api/user/login",
                         "/api/user/register",
                         "/api/user/users/recommend",
+                        "/api/user/get/all/tags",
                         // admin
                         "/api/admin/login",
                         // doc api

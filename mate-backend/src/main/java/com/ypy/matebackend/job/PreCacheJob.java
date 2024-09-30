@@ -25,12 +25,12 @@ public class PreCacheJob {
 
     @Scheduled(cron = "0 0 * * * *")  // 每小时执行一次
     public void doPreCacheJob() {
-        RLock rLock = redisson.getLock("mate-precachejob-doprecachejob-lock");
+        RLock rLock = redisson.getLock("mate:precache-job:do-precache-job:lock");
         try {
             if (rLock.tryLock(0L, 5L /*-1L 看门狗机制*/, TimeUnit.SECONDS)) {  // 抢到锁了就执行更新任务
                 // 查找 "常用" 用户 => 登陆时间距离当下 <= 3 天 并且每小时更新
                 List<User> activeUsers = userActionService.getActiveUsers();
-                String redisKey = "mate-precachejob-activeusers";
+                String redisKey = "mate:precache-job:active-users";
                 redisTemplate.opsForValue().set(redisKey, activeUsers, 70, TimeUnit.MINUTES);  // 缓存有效期设置为70分钟
 
                 /**
@@ -40,7 +40,6 @@ public class PreCacheJob {
                  * 可能会出现任务执行过程中缓存已经失效但新数据还未写入 Redis 的情况。
                  * 建议将缓存时间设置为稍微大于 1 小时，比如 65 分钟或者 70 分钟，这样可以避免缓存过期问题。
                  */
-
 //                // 使用 Redisson 设置 Redis 缓存
 //                RBucket<List<User>> bucket = redisson.getBucket(redisKey);
 //                bucket.set(activeUsers, 70, TimeUnit.MINUTES); // 设置缓存并定义过期时间为70分钟

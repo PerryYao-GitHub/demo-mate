@@ -14,26 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO extends User{
-//    private Integer id;
-//
-//    private String account;
-//
-//    private String name; // 可改
-//
-//    private String avatar;  // 可改
-//
-//    private String phone;  // 可改
-//
-//    private String email;  // 可改
-//
-//    private String tags;  // 可改
-//
-//    private Byte status;
-//
-//    private LocalDateTime loginTime;
-//
-//    private LocalDateTime createTime;
-
     private List<Team> joiningTeams;  // 增加字段
 
     public static UserDTO toDTO(User user) {

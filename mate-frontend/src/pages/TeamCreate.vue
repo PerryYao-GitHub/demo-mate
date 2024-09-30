@@ -14,7 +14,6 @@ const onSubmit = async () => {
     ...createTeamForm.value
   })
   if (resp.data.code === 200) {
-    // console.log(resp.data.data);
     showToast({
       type: "success",
       message: resp.data.description,

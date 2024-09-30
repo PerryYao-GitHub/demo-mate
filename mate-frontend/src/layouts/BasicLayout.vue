@@ -19,7 +19,12 @@ watch(route, (newRoute) => {
   } else if (path.startsWith('/me')) {
     activeTab.value = 'me';
     title.value = 'Me';
-    title.value = path === '/me/edit' ? 'Edit' : path === '/me/auth' ? 'Auth' : 'Me'; // 特殊情况
+    let titleName = "";
+    if (path === '/me/edit') titleName = 'Edit';
+    else if (path.startsWith('/me/edit/tags')) titleName = 'Edit Tags'
+    else if (path === '/me/auth') titleName = 'Auth'
+    else titleName = 'Me'
+    title.value = titleName;
   } else if (path.startsWith('/search')) {
     activeTab.value = 'search';
     title.value = path === '/search/result' ? 'Result' : 'Search';
@@ -29,6 +34,9 @@ watch(route, (newRoute) => {
   } else if (path === '/home') {
     activeTab.value = 'home';
     title.value = 'Home';
+  } else if (path.startsWith('/user')) {
+    activeTab.value = 'home';
+    title.value = 'user';
   } else {
     activeTab.value = 'home'; // 默认路径
     title.value = 'Home';

@@ -18,10 +18,8 @@ const checkOneTeam = (teamId:number) => {
       :title="team.name"
       :desc="team.description"
       :num="team.memberCnt"
+      @click="checkOneTeam(team.id)"
   >
-    <template #footer>
-      <van-button @click="checkOneTeam(team.id)">check</van-button>
-    </template>
   </van-card>
   <van-empty v-if="!props.teamLst || props.teamLst.length === 0" description="net error"></van-empty>
 
