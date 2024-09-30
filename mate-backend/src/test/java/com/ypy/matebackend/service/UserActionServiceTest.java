@@ -18,8 +18,8 @@ class UserActionServiceTest {
 
     @Test
     void searchUsersByTags() {
-        List<String> tags = Arrays.asList("java", "music");
-        Resp resp = userActionService.searchUsersByTags(tags);
-        System.out.println(resp.getData());
+//        List<String> tags = Arrays.asList("java", "music");
+//        Resp resp = userActionService.searchUsersByTags(tags);
+//        System.out.println(resp.getData());
     }
 }

@@ -1,19 +1,19 @@
 # Mate System
 
-brief: to help people find their partner
+brief: to help people find their partners
+
+url: http://8.148.21.185:81/
 
 ## Demanding Analysis
 
 1. add tag, change tag, divide tag
 2. search tag
-   1. Redis
 3. make group
    1. create group
    2. join group
    3. search group by tag
    4. invite others into group
 4. recommend
-   1. 相似度算法 + 本地分布式
 
 ## Tach Stack
 
@@ -22,16 +22,31 @@ brief: to help people find their partner
 1. Vue3
 2. Vant UI (基于Vue的移动端组件库)
 3. Vite 打包工具
-4. Nginx单机部署
+4. Nginx 单机部署
 
 ### Backend
 
-1. Java + SpringBoot
-2. SpringMVC + MyBatis Plus
+1. Java + Spring Boot
+2. Spring MVC + MyBatis Plus + Redisson + Spring Data Redis
 3. MySQL + Redis
 4. Swagger + Knife4j
 
-# Notes
+## Main Works
+
+- **登录及权限控制**: 使用 Session-Cookie 和 Redis 模式实现用户的登录权限认证. 
+- **数据库**: 使用 MySQL 和 Redis 的组合, 在需要频繁读取的场合使用 Redis 提升系统效率. 
+- **前端**: 使用流行的移动端网页组件库 Vant-UI, 完成了主页, 登录, 组队, 个人中心等页面的开发. 
+
+## **Main Tech**:
+
+- 对于项目中复杂的集合处理, 使用 **Java 8 Stream API** 和 **Lambda** 表达式来简化代码. 
+- 使用 **Spring Scheduler** 实现定时任务, 以预热缓存, 解决首次访问用户主页加载过慢的问题. 
+-  使用 **Redisson 分布式锁**实现操作互斥: 解决同一用户重复加入队伍和入队人数超限的问题, 确保接口的幂等性;  同时为了兼容多机部署, 对定时任务引入**分布式锁**机制, 避免多台服务器重复执行定时任务. 
+- 使用 **编辑距离算法** 实现了根据标签匹配最相似用户的功能, 并通过**优先队列**来减少 TOP N 运算过程中的内存占用. 
+
+---
+
+# Tech Notes
 
 ## 用户表中的tag
 
@@ -88,45 +103,12 @@ SQL查询
 
 注意, 可以使用 @Profile("prod" / "dev") 来关闭dev环境下的拦截器, 不然就得把所有的api doc 接口排除出拦截器, 不方便
 
-## Redis
-
-基于内存的 K/V 数据库, 读取用户的Session信息极为频繁, 故选择 Redis
-
-引入redis
-
-`org.springframework.boot` -> `spring-boot-starter-data-redis`
-
-引入session与redis的整合工具
-
-`org.springframework.session` -> `spring-data-redis`
-
-调整session存储位置
-
-````yml
-spring:
-  session:
-    timeout: 1440m
-    store-type: redis
-````
-
-认证的方法
-
-session-cookie
-
-- session - 本地内存
-- session - redis (分布式session 登录)
-- session -mysql (类似Django 自带的session处理方案)
-
-jwt
-
-Spring Security : 前后端不分离时期的产物, 只适合做细粒度的权限控制
-
-### 主页功能
+## 主页功能
 
 1. 默认推荐和自己tag相关或接近的用户
 2. 优化主页性能 (缓存 + 定时任务 + 分布式锁)
 
-#### 查询优化
+## 查询优化
 
 从 MySQL 每次查询全体用户 (分页) 太慢且太重复, 因为每一个游客来到 home 界面都要拉取
 
@@ -138,40 +120,7 @@ Spring Security : 前后端不分离时期的产物, 只适合做细粒度的权
 
 当数据量过大 50w + , 即使用分页, 查询也比较慢 -> 换一个地方来查询 !!!
 
-#### 缓存的实现
-
-Redis
-
-memcached
-
----
-
-echch
-
-## Redis
-
-NoSQL + K/V 存储系统
-
-### Java 里的操作方法
-
-- Spring Data Redis
-  - Spring Data: 定义了一组通用的数据库增删改查接口, 支持多种数据库
-- Jedis 对立于 SpringBoot
-- Redission 分布式操作 redis
-
-### 数据结构
-
-String
-
-List
-
-Set
-
-Hash
-
-Zset: 比set多了一个分数 {"aaa-9", "bbb-8"} 排行榜
-
-
+## 缓存的实现
 
 ### 缓存预热
 
@@ -221,7 +170,7 @@ redisson 中的续期机制 看门狗
 - 编辑距离算法
 - 余弦相似度 (带权重)
 
-
+## 缓存用户查询结果的考虑
 
 ### 方法1：按分页来存储用户的推荐信息
 

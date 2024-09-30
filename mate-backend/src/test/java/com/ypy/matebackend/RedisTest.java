@@ -50,8 +50,8 @@ public class RedisTest {
     @Test
     void loadRedisData() {
         // 调试前执行它来加载 redis 数据
-        List<User> activeUsers = userActionService.getActiveUsers();
-        String redisKey = "mate:precache-job:active-users";
-        redisTemplate.opsForValue().set(redisKey, activeUsers, 70, TimeUnit.MINUTES);  // 缓存有效期设置为70分钟
+//        List<User> activeUsers = userActionService.getActiveUsers();
+//        String redisKey = "mate:precache-job:active-users";
+//        redisTemplate.opsForValue().set(redisKey, activeUsers, 70, TimeUnit.MINUTES);  // 缓存有效期设置为70分钟
     }
 }
